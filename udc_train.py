@@ -22,8 +22,9 @@ tf.flags.DEFINE_integer("eval_every", 1000, "Evaluate after this many train step
 FLAGS = tf.flags.FLAGS
 FLAGS.input_dir = os.path.expanduser(FLAGS.input_dir)
 
-TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d%H")
+TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d%H%M")
 MODEL_DIR = os.path.join(os.path.expanduser(FLAGS.model_dir), TIMESTAMP)
+#MODEL_DIR = os.path.expanduser(FLAGS.model_dir)
 TRAIN_FILE = os.path.join(FLAGS.input_dir, "train.tfrecords")
 VALIDATION_FILE = os.path.join(FLAGS.input_dir, "valid.tfrecords")
 
