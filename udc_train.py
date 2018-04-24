@@ -1,29 +1,30 @@
 import os
-import time
-import itertools
+import datetime
+import logging
 import tensorflow as tf
+from tensorflow.python import debug as tfdbg
 import udc_model
 import udc_hparams
 import udc_metrics
 import udc_inputs
 from models.dual_encoder import dual_encoder_model
 
+
+#logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+
 tf.flags.DEFINE_string("input_dir", "./data", "Directory containing input data files 'train.tfrecords' and 'validation.tfrecords'")
-tf.flags.DEFINE_string("model_dir", None, "Directory to store model checkpoints (defaults to ./runs)")
-tf.flags.DEFINE_integer("loglevel", 20, "Tensorflow log level")
-tf.flags.DEFINE_integer("num_epochs", None, "Number of training Epochs. Defaults to indefinite.")
-tf.flags.DEFINE_integer("eval_every", 2000, "Evaluate after this many train steps")
+tf.flags.DEFINE_string("model_dir", "./runs", "Directory to store model checkpoints (defaults to ./runs)")
+tf.flags.DEFINE_integer("loglevel", tf.logging.DEBUG, "Tensorflow log level")
+tf.flags.DEFINE_integer("num_epochs", None , "Number of training Epochs. Defaults to indefinite.")
+tf.flags.DEFINE_integer("eval_every", 10, "Evaluate after this many train steps")
+
 FLAGS = tf.flags.FLAGS
+FLAGS.input_dir = os.path.expanduser(FLAGS.input_dir)
 
-TIMESTAMP = int(time.time())
-
-if FLAGS.model_dir:
-  MODEL_DIR = FLAGS.model_dir
-else:
-  MODEL_DIR = os.path.abspath(os.path.join("./runs", str(TIMESTAMP)))
-
-TRAIN_FILE = os.path.abspath(os.path.join(FLAGS.input_dir, "train.tfrecords"))
-VALIDATION_FILE = os.path.abspath(os.path.join(FLAGS.input_dir, "validation.tfrecords"))
+TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d%H")
+MODEL_DIR = os.path.join(os.path.expanduser(FLAGS.model_dir), TIMESTAMP)
+TRAIN_FILE = os.path.join(FLAGS.input_dir, "train.tfrecords")
+VALIDATION_FILE = os.path.join(FLAGS.input_dir, "valid.tfrecords")
 
 tf.logging.set_verbosity(FLAGS.loglevel)
 
@@ -36,8 +37,7 @@ def main(unused_argv):
 
   estimator = tf.contrib.learn.Estimator(
     model_fn=model_fn,
-    model_dir=MODEL_DIR,
-    config=tf.contrib.learn.RunConfig())
+    model_dir=MODEL_DIR)
 
   input_fn_train = udc_inputs.create_input_fn(
     mode=tf.contrib.learn.ModeKeys.TRAIN,
@@ -58,7 +58,11 @@ def main(unused_argv):
         every_n_steps=FLAGS.eval_every,
         metrics=eval_metrics)
 
-  estimator.fit(input_fn=input_fn_train, steps=None, monitors=[eval_monitor])
+  dbg_hook = tfdbg.LocalCLIDebugHook()
+  estimator.fit(
+    input_fn=input_fn_train,
+    steps=10, monitors=[eval_monitor]
+  )
 
 if __name__ == "__main__":
   tf.app.run()

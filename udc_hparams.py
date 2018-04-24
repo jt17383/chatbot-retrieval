@@ -1,11 +1,9 @@
 import tensorflow as tf
+import os
 from collections import namedtuple
 
 # Model Parameters
-tf.flags.DEFINE_integer(
-  "vocab_size",
-  91620,
-  "The size of the vocabulary. Only change this if you changed the preprocessing")
+tf.flags.DEFINE_integer("vocab_size",25905,"The size of the vocabulary. Only change this if you changed the preprocessing")
 
 # Model Parameters
 tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of the embeddings")
@@ -25,6 +23,7 @@ tf.flags.DEFINE_string("optimizer", "Adam", "Optimizer Name (Adam, Adagrad, etc)
 
 FLAGS = tf.flags.FLAGS
 
+
 HParams = namedtuple(
   "HParams",
   [
@@ -42,6 +41,10 @@ HParams = namedtuple(
   ])
 
 def create_hparams():
+
+  with open(os.path.join(os.path.expanduser(FLAGS.input_dir),'vocab_size.txt'),'r') as f:
+    FLAGS.vocab_size = int(f.read())
+
   return HParams(
     batch_size=FLAGS.batch_size,
     eval_batch_size=FLAGS.eval_batch_size,

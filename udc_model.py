@@ -5,6 +5,17 @@ def get_id_feature(features, key, len_key, max_len):
   ids = features[key]
   ids_len = tf.squeeze(features[len_key], [1])
   ids_len = tf.minimum(ids_len, tf.constant(max_len, dtype=tf.int64))
+
+  # def _debug_print_func(fc1_val, fc2_val):
+  #   print(f'FC1 : {}, FC2 : {}').format(fc1_val.shape, fc2_val.shape)
+  #   print
+  #   'min, max of FC2 = {}, {}'.format(fc2_val.min(), fc2_val.max())
+  #   return False
+  #
+  # debug_print_op = tf.py_func(_debug_print_func, [featur])
+  # with tf.control_dependencies(debug_print_op):
+  #   out = tf.identity(out, name='out')
+
   return ids, ids_len
 
 def create_train_op(loss, hparams):
@@ -26,7 +37,9 @@ def create_model_fn(hparams, model_impl):
     utterance, utterance_len = get_id_feature(
         features, "utterance", "utterance_len", hparams.max_utterance_len)
 
-    batch_size = targets.get_shape().as_list()[0]
+    # https://github.com/dennybritz/chatbot-retrieval/issues/32#issuecomment-265819109
+    if mode == tf.contrib.learn.ModeKeys.EVAL:
+        batch_size = targets.get_shape().as_list()[0]
 
     if mode == tf.contrib.learn.ModeKeys.TRAIN:
       probs, loss = model_impl(
@@ -76,20 +89,23 @@ def create_model_fn(hparams, model_impl):
       probs, loss = model_impl(
           hparams,
           mode,
-          tf.concat(0, all_contexts),
-          tf.concat(0, all_context_lens),
-          tf.concat(0, all_utterances),
-          tf.concat(0, all_utterance_lens),
-          tf.concat(0, all_targets))
+          tf.concat(all_contexts,0),
+          tf.concat(all_context_lens,0),
+          tf.concat(all_utterances,0),
+          tf.concat(all_utterance_lens,0),
+          tf.concat(all_targets,0))
 
-      split_probs = tf.split(0, 10, probs)
-      shaped_probs = tf.concat(1, split_probs)
+      # fixed parameter order
+      split_probs = tf.split(probs, 10, 0)
+      shaped_probs = tf.concat(split_probs, 1)
 
-      # Add summaries
-      tf.histogram_summary("eval_correct_probs_hist", split_probs[0])
-      tf.scalar_summary("eval_correct_probs_average", tf.reduce_mean(split_probs[0]))
-      tf.histogram_summary("eval_incorrect_probs_hist", split_probs[1])
-      tf.scalar_summary("eval_incorrect_probs_average", tf.reduce_mean(split_probs[1]))
+      # # Add summaries
+      tf.summary.histogram("eval_correct_probs_hist", split_probs[0])
+      tf.summary.scalar("eval_correct_probs_average", tf.reduce_mean(split_probs[0]))
+      tf.summary.histogram("eval_incorrect_probs_hist", split_probs[1])
+      tf.summary.scalar("eval_incorrect_probs_average", tf.reduce_mean(split_probs[1]))
+      tf.summary.merge_all()
+
 
       return shaped_probs, loss, None
 

@@ -9,17 +9,21 @@ import udc_metrics
 import udc_inputs
 from models.dual_encoder import dual_encoder_model
 
-tf.flags.DEFINE_string("test_file", "./data/test.tfrecords", "Path of test data in TFRecords format")
-tf.flags.DEFINE_string("model_dir", None, "Directory to load model checkpoints from")
-tf.flags.DEFINE_integer("loglevel", 20, "Tensorflow log level")
-tf.flags.DEFINE_integer("test_batch_size", 16, "Batch size for testing")
+tf.flags.DEFINE_string("input_dir", "/Users/john/data/ubuntu/input", "Directory containing input data files 'train.tfrecords' and 'validation.tfrecords'")
+tf.flags.DEFINE_string("test_file", "test.tfrecords", "Path of test data in TFRecords format")
+tf.flags.DEFINE_string("model_dir", "/Users/john/data/ubuntu/output", "Directory to load model checkpoints from")
+tf.flags.DEFINE_integer("loglevel", 1, "Tensorflow log level")
+tf.flags.DEFINE_integer("test_batch_size", 8, "Batch size for testing")
 FLAGS = tf.flags.FLAGS
 
 if not FLAGS.model_dir:
   print("You must specify a model directory")
   sys.exit(1)
 
-tf.logging.set_verbosity(FLAGS.loglevel)
+#tf.logging.set_verbosity(FLAGS.loglevel)
+tf.logging.set_verbosity(tf.logging.DEBUG)
+
+FLAGS.test_file = os.path.abspath(os.path.join(FLAGS.input_dir,FLAGS.test_file))
 
 if __name__ == "__main__":
   hparams = udc_hparams.create_hparams()
@@ -33,7 +37,7 @@ if __name__ == "__main__":
     mode=tf.contrib.learn.ModeKeys.EVAL,
     input_files=[FLAGS.test_file],
     batch_size=FLAGS.test_batch_size,
-    num_epochs=1)
+    num_epochs=None)
 
   eval_metrics = udc_metrics.create_evaluation_metrics()
-  estimator.evaluate(input_fn=input_fn_test, steps=None, metrics=eval_metrics)
+  estimator.evaluate(input_fn=input_fn_test, steps=1, metrics=eval_metrics, name='testset')
