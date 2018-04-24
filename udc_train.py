@@ -17,7 +17,7 @@ tf.flags.DEFINE_string("model_dir", "./runs", "Directory to store model checkpoi
 tf.flags.DEFINE_integer("loglevel", tf.logging.DEBUG, "Tensorflow log level")
 tf.flags.DEFINE_integer("num_epochs", None , "Number of training Epochs. Defaults to indefinite.")
 tf.flags.DEFINE_integer("num_steps", 20000, "train steps")
-tf.flags.DEFINE_integer("eval_every", 10, "Evaluate after this many train steps")
+tf.flags.DEFINE_integer("eval_every", 1000, "Evaluate after this many train steps")
 
 FLAGS = tf.flags.FLAGS
 FLAGS.input_dir = os.path.expanduser(FLAGS.input_dir)
