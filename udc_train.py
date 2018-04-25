@@ -10,7 +10,7 @@ import udc_inputs
 from models.dual_encoder import dual_encoder_model
 
 
-#logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.DEBUG)
 
 tf.flags.DEFINE_string("input_dir", "./data", "Directory containing input data files 'train.tfrecords' and 'validation.tfrecords'")
 tf.flags.DEFINE_string("model_dir", "./runs", "Directory to store model checkpoints (defaults to ./runs)")
